@@ -1,17 +1,19 @@
 package main
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math"
-	"os"
 	"time"
+
+	"github.com/0xmukesh/sound-synthesizer/constants"
+	"github.com/0xmukesh/sound-synthesizer/helpers"
+	"github.com/0xmukesh/sound-synthesizer/types"
 )
 
 const (
 	duration   = 5
 	sampleRate = 44100
-	freq       = 1000
+	freq       = 100
 )
 
 func main() {
@@ -24,32 +26,31 @@ func main() {
 	endAmplitude := 1.0e-4
 	decayFactor := math.Pow(endAmplitude/startAmplitude, 1.0/float64(ns))
 
-	_, err := os.Stat("out.bin")
-	if err == nil {
-		if err := os.Remove("out.bin"); err != nil {
-			panic(err.Error())
-		}
-	}
-
-	f, err := os.Create("out.bin")
-	if err != nil {
-		panic(err.Error())
-	}
-
 	start := time.Now()
 
+	wavefmt := types.WaveFmt{
+		SubChunk1Id:   []byte(constants.WaveSubChunk1Id),
+		SubChunk1Size: 16,
+		AudioFormat:   1,
+		NumOfChannels: 2,
+		SampleRate:    sampleRate,
+		ByteRate:      (sampleRate) * 2 * 16 / 8,
+		BlockAlign:    2 * 16 / 8,
+		BitsPerSample: 16,
+	}
+
+	var samples []types.Sample
+
 	for i := 0; i < ns; i++ {
-		sample := math.Sin(angle * freq * float64(i))
-		sample *= startAmplitude
+		sample := types.Sample(math.Sin(angle*freq*float64(i)) * startAmplitude)
 		startAmplitude *= decayFactor
 
-		var buf [8]byte
-		binary.LittleEndian.PutUint32(buf[:], math.Float32bits(float32(sample)))
+		samples = append(samples, sample)
+	}
 
-		_, err := f.Write(buf[:])
-		if err != nil {
-			panic(err.Error())
-		}
+	waveWriter := helpers.NewWaveWriter()
+	if err := waveWriter.WriteWaveFile("test.wav", samples, wavefmt); err != nil {
+		panic(err.Error())
 	}
 
 	fmt.Printf("done - %dms\n", time.Since(start).Milliseconds())
