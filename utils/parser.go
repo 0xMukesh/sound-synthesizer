@@ -14,7 +14,6 @@ func WaveFmtToBits(wfmt types.WaveFmt) []byte {
 	b = append(b, wfmt.SubChunk1Id...)
 	b = append(b, Int32ToBits(wfmt.SubChunk1Size)...)
 	b = append(b, Int16ToBits(wfmt.AudioFormat)...)
-	b = append(b, Int16ToBits(wfmt.AudioFormat)...)
 	b = append(b, Int16ToBits(wfmt.NumOfChannels)...)
 	b = append(b, Int32ToBits(wfmt.SampleRate)...)
 	b = append(b, Int32ToBits(wfmt.ByteRate)...)
