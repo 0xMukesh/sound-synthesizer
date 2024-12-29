@@ -2,6 +2,16 @@ package types
 
 type Sample float64
 
+func (s Sample) ToFloat() float64 {
+	return float64(s)
+}
+
+type Wave struct {
+	WaveHeader
+	WaveFmt
+	Samples []Sample
+}
+
 type WaveHeader struct {
 	ChunkId   []byte
 	ChunkSize int
@@ -16,4 +26,10 @@ type WaveFmt struct {
 	ByteRate      int    // byte rate = (sample rate) * (num of channels) * (bits per sample)/8
 	BlockAlign    int    // block align = (num of channels) * (bits per sample)/8
 	BitsPerSample int
+}
+
+type WaveData struct {
+	SubChunk2Id   []byte
+	SubChunk2Size int
+	Samples       []Sample
 }

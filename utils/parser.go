@@ -1,9 +1,6 @@
 package utils
 
 import (
-	"fmt"
-	"math"
-
 	"github.com/0xmukesh/sound-synthesizer/constants"
 	"github.com/0xmukesh/sound-synthesizer/types"
 )
@@ -27,21 +24,7 @@ func SamplesToBits(samples []types.Sample, wfmt types.WaveFmt) ([]byte, error) {
 	var b []byte
 
 	for _, s := range samples {
-		var multiplier int
-
-		switch wfmt.BitsPerSample {
-		case 8:
-			multiplier = math.MaxInt8
-		case 16:
-			multiplier = math.MaxInt16
-		case 32:
-			multiplier = math.MaxInt32
-		case 64:
-			multiplier = math.MaxInt64
-		default:
-			return nil, fmt.Errorf("invalid size - %d, must be 8, 16, 32 or 64-bits only", wfmt.BitsPerSample)
-		}
-
+		multiplier := MaxValue(wfmt.BitsPerSample)
 		bits := IntToBits(int(float64(s)*float64(multiplier)), wfmt.BitsPerSample)
 		b = append(b, bits...)
 	}

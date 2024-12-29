@@ -17,34 +17,40 @@ func NewWaveReader() WaveReader {
 	return WaveReader{}
 }
 
-func (r WaveReader) ParseFile(file string) (types.WaveHeader, types.WaveFmt, []types.Sample, error) {
+func (r WaveReader) ParseFile(file string) (types.Wave, error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return types.WaveHeader{}, types.WaveFmt{}, nil, err
+		return types.Wave{}, err
 	}
 	defer f.Close()
 
 	data, err := io.ReadAll(f)
 	if err != nil {
-		return types.WaveHeader{}, types.WaveFmt{}, nil, err
+		return types.Wave{}, err
 	}
 
 	header, err := r.parseHeader(data)
 	if err != nil {
-		return types.WaveHeader{}, types.WaveFmt{}, nil, err
+		return types.Wave{}, err
 	}
 
 	wavefmt, err := r.parseMetadata(data)
 	if err != nil {
-		return types.WaveHeader{}, types.WaveFmt{}, nil, err
+		return types.Wave{}, err
 	}
 
 	samples, err := r.parseData(data)
 	if err != nil {
-		return types.WaveHeader{}, types.WaveFmt{}, nil, err
+		return types.Wave{}, err
 	}
 
-	return header, wavefmt, samples, nil
+	wave := types.Wave{
+		WaveHeader: header,
+		WaveFmt:    wavefmt,
+		Samples:    samples,
+	}
+
+	return wave, nil
 }
 
 func (r WaveReader) parseHeader(data []byte) (types.WaveHeader, error) {
@@ -105,8 +111,9 @@ func (r WaveReader) parseData(data []byte) ([]types.Sample, error) {
 
 	for i := 0; i < len(rawData); i += bytesPerSampleSize {
 		rawSample := rawData[i : i+bytesPerSampleSize]
-		sample := utils.BitsToFloat(rawSample)
-		samples = append(samples, types.Sample(sample))
+		unscaledSample := utils.BitsToInt(rawSample, metadata.BitsPerSample)
+		scaledSample := types.Sample(float64(unscaledSample) / float64(utils.MaxValue(metadata.BitsPerSample)))
+		samples = append(samples, scaledSample)
 	}
 
 	return samples, nil

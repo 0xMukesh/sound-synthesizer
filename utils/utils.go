@@ -7,6 +7,17 @@ import (
 	"math"
 )
 
+func BitsToInt(b []byte, size int) int {
+	switch size {
+	case 16:
+		return Bits16ToInt(b)
+	case 32:
+		return Bits32ToInt(b)
+	default:
+		panic("invalid size. only 16 and 32 bits are accepted")
+	}
+}
+
 func Bits16ToInt(b []byte) int {
 	if len(b) != 2 {
 		panic(fmt.Errorf("invalid size. expected 2, got %d", len(b)))
@@ -74,18 +85,35 @@ func FloatToBits(f float64, size int) []byte {
 }
 
 func BitsToFloat(b []byte) float64 {
-	var bits uint64
-
 	switch len(b) {
 	case 2:
-		bits = uint64(binary.LittleEndian.Uint16(b))
+		panic("16-bit floats are not supported in Go")
 	case 4:
-		bits = uint64(binary.LittleEndian.Uint32(b))
+		bits32 := binary.LittleEndian.Uint32(b)
+		return float64(math.Float32frombits(bits32))
 	case 8:
-		bits = uint64(binary.LittleEndian.Uint64(b))
+		bits64 := binary.LittleEndian.Uint64(b)
+		return math.Float64frombits(bits64)
 	default:
-		panic(fmt.Errorf("invalid size: %d, must be 16, 32 or 64 bits", len(b)))
+		panic(fmt.Errorf("invalid size: %d, must be 32 or 64 bits", len(b)*8))
+	}
+}
+
+func MaxValue(numOfBits int) int {
+	var max int
+
+	switch numOfBits {
+	case 8:
+		max = math.MaxInt8
+	case 16:
+		max = math.MaxInt16
+	case 32:
+		max = math.MaxInt32
+	case 64:
+		max = math.MaxInt64
+	default:
+		panic(fmt.Errorf("invalid size - %d, must be 8, 16, 32 or 64-bits only", numOfBits))
 	}
 
-	return math.Float64frombits(bits)
+	return max
 }
