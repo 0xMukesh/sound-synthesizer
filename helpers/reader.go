@@ -34,7 +34,7 @@ func (r WaveReader) ParseFile(file string) (types.Wave, error) {
 		return types.Wave{}, err
 	}
 
-	wavefmt, err := r.parseMetadata(data)
+	wavefmt, err := r.parseWaveFmt(data)
 	if err != nil {
 		return types.Wave{}, err
 	}
@@ -73,28 +73,28 @@ func (r WaveReader) parseHeader(data []byte) (types.WaveHeader, error) {
 	return header, nil
 }
 
-func (r WaveReader) parseMetadata(data []byte) (types.WaveFmt, error) {
-	metadata := types.WaveFmt{}
+func (r WaveReader) parseWaveFmt(data []byte) (types.WaveFmt, error) {
+	wavefmt := types.WaveFmt{}
 
 	subChunk1Id := data[12:16]
 	if string(subChunk1Id) != constants.WaveSubChunk1Id {
-		return metadata, fmt.Errorf("invalid sub chunk 1 id - %s", string(subChunk1Id))
+		return wavefmt, fmt.Errorf("invalid sub chunk 1 id - %s", string(subChunk1Id))
 	}
 
-	metadata.SubChunk1Id = subChunk1Id
-	metadata.SubChunk1Size = utils.Bits32ToInt(data[16:20])
-	metadata.AudioFormat = utils.Bits16ToInt(data[20:22])
-	metadata.NumOfChannels = utils.Bits16ToInt(data[22:24])
-	metadata.SampleRate = utils.Bits32ToInt(data[24:28])
-	metadata.ByteRate = utils.Bits32ToInt(data[28:32])
-	metadata.BlockAlign = utils.Bits16ToInt(data[32:34])
-	metadata.BitsPerSample = utils.Bits16ToInt(data[34:36])
+	wavefmt.SubChunk1Id = subChunk1Id
+	wavefmt.SubChunk1Size = utils.Bits32ToInt(data[16:20])
+	wavefmt.AudioFormat = utils.Bits16ToInt(data[20:22])
+	wavefmt.NumOfChannels = utils.Bits16ToInt(data[22:24])
+	wavefmt.SampleRate = utils.Bits32ToInt(data[24:28])
+	wavefmt.ByteRate = utils.Bits32ToInt(data[28:32])
+	wavefmt.BlockAlign = utils.Bits16ToInt(data[32:34])
+	wavefmt.BitsPerSample = utils.Bits16ToInt(data[34:36])
 
-	return metadata, nil
+	return wavefmt, nil
 }
 
 func (r WaveReader) parseData(data []byte) ([]types.Sample, error) {
-	metadata, err := r.parseMetadata(data)
+	wavefmt, err := r.parseWaveFmt(data)
 	if err != nil {
 		return nil, err
 	}
@@ -104,15 +104,15 @@ func (r WaveReader) parseData(data []byte) ([]types.Sample, error) {
 		return nil, fmt.Errorf("invalid sub chunk 2 id - %s", string(subChunk2Id))
 	}
 
-	bytesPerSampleSize := metadata.BitsPerSample / 8
+	bytesPerSampleSize := wavefmt.BitsPerSample / 8
 	rawData := data[44:]
 
 	samples := []types.Sample{}
 
 	for i := 0; i < len(rawData); i += bytesPerSampleSize {
 		rawSample := rawData[i : i+bytesPerSampleSize]
-		unscaledSample := utils.BitsToInt(rawSample, metadata.BitsPerSample)
-		scaledSample := types.Sample(float64(unscaledSample) / float64(utils.MaxValue(metadata.BitsPerSample)))
+		unscaledSample := utils.BitsToInt(rawSample, wavefmt.BitsPerSample)
+		scaledSample := types.Sample(float64(unscaledSample) / float64(utils.MaxValue(wavefmt.BitsPerSample)))
 		samples = append(samples, scaledSample)
 	}
 

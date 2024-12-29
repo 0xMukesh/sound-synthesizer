@@ -86,8 +86,6 @@ func FloatToBits(f float64, size int) []byte {
 
 func BitsToFloat(b []byte) float64 {
 	switch len(b) {
-	case 2:
-		panic("16-bit floats are not supported in Go")
 	case 4:
 		bits32 := binary.LittleEndian.Uint32(b)
 		return float64(math.Float32frombits(bits32))
