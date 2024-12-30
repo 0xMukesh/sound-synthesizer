@@ -20,9 +20,11 @@ func Execute() error {
 
 	genCmd := commands.GenerateCmd{}
 	amplifyCmd := commands.AmplifyCmd{}
+	stereoPanCmd := commands.StereoPanCmd{}
 
 	rootCmd.AddCommand(genCmd.Command())
 	rootCmd.AddCommand(amplifyCmd.Command())
+	rootCmd.AddCommand(stereoPanCmd.Command())
 
 	return rootCmd.ExecuteContext(context.Background())
 }

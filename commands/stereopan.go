@@ -6,16 +6,17 @@ import (
 
 	"github.com/0xmukesh/sound-synthesizer/helpers"
 	"github.com/0xmukesh/sound-synthesizer/types"
+	"github.com/0xmukesh/sound-synthesizer/utils"
 	"github.com/spf13/cobra"
 )
 
-type AmplifyCmd struct{}
+type StereoPanCmd struct{}
 
-func (c AmplifyCmd) Command() *cobra.Command {
+func (c StereoPanCmd) Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "amplify",
-		Short:   "changes amplitude of an input wave file and saves it to another file",
-		Example: "ss amplify",
+		Use:     "stereopan",
+		Short:   "takes in a mono audio file and does panning and returns a stereo audio file",
+		Example: "ss stereopan",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := c.Handler(cmd); err != nil {
 				fmt.Println(err.Error())
@@ -28,7 +29,7 @@ func (c AmplifyCmd) Command() *cobra.Command {
 
 	cmd.Flags().String("input", "", "input file (required)")
 	cmd.Flags().String("output", "", "output file (required)")
-	cmd.Flags().Float64("scale_factor", 1.0, "scale factor")
+	cmd.Flags().Float64("panning_position", 0.0, "panning position")
 
 	cmd.MarkFlagRequired("input")
 	cmd.MarkFlagRequired("output")
@@ -36,10 +37,10 @@ func (c AmplifyCmd) Command() *cobra.Command {
 	return cmd
 }
 
-func (c AmplifyCmd) Handler(cmd *cobra.Command) error {
+func (c StereoPanCmd) Handler(cmd *cobra.Command) error {
 	input, _ := cmd.Flags().GetString("input")
 	output, _ := cmd.Flags().GetString("output")
-	scaleFactor, _ := cmd.Flags().GetFloat64("scale_factor")
+	panningPosition, _ := cmd.Flags().GetFloat64("panning_position")
 
 	waveReader := helpers.NewWaveReader()
 	waveWriter := helpers.NewWaveWriter()
@@ -49,12 +50,16 @@ func (c AmplifyCmd) Handler(cmd *cobra.Command) error {
 		return err
 	}
 
+	leftChanMultiplier, rightChanMultiplier := utils.PanPositionToChanMultipliers(panningPosition)
+
 	var updatedSamples []types.Sample
 
 	for _, sample := range wave.Samples {
-		updatedSample := types.Sample(float64(sample) * scaleFactor)
-		updatedSamples = append(updatedSamples, updatedSample)
+		updatedSamples = append(updatedSamples, types.Sample(sample.ToFloat()*leftChanMultiplier))
+		updatedSamples = append(updatedSamples, types.Sample(sample.ToFloat()*rightChanMultiplier))
 	}
+
+	wave.WaveFmt.NumOfChannels = 2
 
 	if err := waveWriter.WriteWaveFile(output, updatedSamples, wave.WaveFmt); err != nil {
 		return err

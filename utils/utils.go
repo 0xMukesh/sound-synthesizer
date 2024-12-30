@@ -115,3 +115,14 @@ func MaxValue(numOfBits int) int {
 
 	return max
 }
+
+func PanPositionToChanMultipliers(p float64) (float64, float64) {
+	if !(p >= -1 && p <= 1) {
+		panic("pan position outside [-1, 1] range")
+	}
+
+	leftChanMultiplier := (p / 2) - 0.5
+	rightChanMultiplier := (p / 2) + 0.5
+
+	return leftChanMultiplier, rightChanMultiplier
+}

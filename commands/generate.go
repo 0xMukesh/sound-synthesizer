@@ -14,17 +14,13 @@ import (
 
 type GenerateCmd struct{}
 
-func NewGenerateCmd() GenerateCmd {
-	return GenerateCmd{}
-}
-
 func (c GenerateCmd) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "generate",
 		Short:   "generates a pure sine wave with a constant frequency and saves it a .wave file",
 		Example: "ss generate",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := c.Handler(cmd, args); err != nil {
+			if err := c.Handler(cmd); err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
 			}
@@ -43,7 +39,7 @@ func (c GenerateCmd) Command() *cobra.Command {
 	return cmd
 }
 
-func (c GenerateCmd) Handler(cmd *cobra.Command, args []string) error {
+func (c GenerateCmd) Handler(cmd *cobra.Command) error {
 	freq, _ := cmd.Flags().GetFloat64("freq")
 	duration, _ := cmd.Flags().GetInt("duration")
 	sampleRate, _ := cmd.Flags().GetInt("sample_rate")
